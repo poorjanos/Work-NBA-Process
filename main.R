@@ -7,6 +7,7 @@ library(tidyr)
 library(lubridate)
 library(bupaR)
 library(processmapR)
+library(processmonitR)
 
 #########################################################################################
 # Data Extraction #######################################################################
@@ -83,13 +84,18 @@ t_event_log <- t_newbusiness_event_log %>%
     TRUE ~ "END"
   ))
 
+# Gen app input
+write.csv(t_event_log %>% filter(CONTRACT_PERIOD == '2018/01'), here::here("Data", "t_event_log_201801.csv"))
+
+
+
 
 # Transform df into bupaR eventlog
 t_log_bupar <- t_event_log %>%
   filter(PRODUCT_LINE == "Home") %>% 
   eventlog(
     case_id = "CASE_ID",
-    activity_id = "EVENT_NAME",
+    activity_id = "EVENT_NAME_HU",
     activity_instance_id = "ACTIVITY_INST_ID",
     lifecycle_id = "LIFECYCLE_ID",
     timestamp = "TIMESTAMP",
@@ -102,7 +108,8 @@ event_log_filt <- t_log_bupar %>%
 
 # Filter for frequent traces
 event_log_filt <- t_log_bupar %>%
-  filter_trace_frequency(percentage = 0.6, reverse = F) 
+  filter_endpoints(start_activities = "alairas", end_activities = "jutalek_kifizetes") %>% 
+  filter_trace_frequency(percentage = 0.25, reverse = F) 
 
 # Plot frequency map
 event_log_filt %>% 
@@ -111,3 +118,20 @@ event_log_filt %>%
 # Plot performance map
 event_log_filt %>% 
   process_map(performance(median, "days"))
+
+
+# Plot custom
+event_log_filt %>% 
+process_map(type_nodes = frequency("absolute"), type_edges = frequency("absolute"), rankdir = "TB")
+
+
+event_log_filt %>% 
+  process_map(type_nodes = frequency("absolute"), type_edges = performance(median, "days"), rankdir = "TB")
+
+# Build filters for
+# AutoUW v Manual
+# Prod line
+# Medium type
+# Trace frequency
+
+activity_dashboard(t_log_bupar)

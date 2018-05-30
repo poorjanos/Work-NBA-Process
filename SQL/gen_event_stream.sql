@@ -578,6 +578,40 @@ UNION
 SELECT * from T_DIJ_HELPER_FUFI;
 COMMIT;
 
+--------------------------------------------------------------------------------
+/* 
+Generate paid commissions to cases
+*/
+DROP TABLE T_JESZ;
+COMMIT;
+
+CREATE TABLE T_JESZ
+AS
+SELECT   c.*, d.check_id, e.cleared_date
+  FROM   (SELECT   DISTINCT
+                   a.proposal_id,
+                   a.contract_id,
+                   FIRST_VALUE(b.invoice_id)
+                      OVER (PARTITION BY a.contract_id
+                            ORDER BY b.accounting_date
+                            ROWS UNBOUNDED PRECEDING)
+                      AS invoice_id,
+                   FIRST_VALUE(b.accounting_date)
+                      OVER (PARTITION BY a.contract_id
+                            ORDER BY b.accounting_date
+                            ROWS UNBOUNDED PRECEDING)
+                      AS accounting_date
+            FROM   t_case a, FAP_INVOICE_DISTRIBUTIONS_ALL@dl_peep b
+           WHERE   a.contract_id = b.attribute3) c,
+         FAP_INVOICE_PAYMENTS_ALL@dl_peep d,
+         FAP_CHECKS_ALL@dl_peep e
+ WHERE       c.invoice_id = d.invoice_id
+         AND d.check_id = e.check_id
+         AND e.check_number LIKE '1%'
+ ORDER BY c.proposal_id, c.accounting_date;
+COMMIT;
+
+
 -------------------------------------------------------------------------------
 /* 
 Generate events stream for autouw cases
@@ -612,37 +646,85 @@ AS
     WHERE   autouw = 'I';
 COMMIT;
 
+DROP TABLE t_events_autouw_enyil;
+COMMIT;
+
+CREATE TABLE t_events_autouw_enyil
+AS
+     SELECT   proposal_id AS case_id,
+              'enyil_paper_arrival' AS event_name,
+              'enyil_papir_erkezes' AS event_name_hu,
+              MIN (f_idopont) AS event_begin,
+              MIN (f_idopont) AS event_end
+       FROM   t_case a, t_portf_esemeny_ajanlat b
+      WHERE       a.proposal_id = b.f_aivk
+              AND autouw = 'I'
+              AND b.f_esemenykod IN ('E1', '60', 'E2')
+   GROUP BY   proposal_id, 'enyil_paper_arrival', 'enyil_papir_erkezes'
+   UNION
+     SELECT   proposal_id AS case_id,
+              'enyil_pkr_arrival' AS event_name,
+              'enyil_pkr_erkezes' AS event_name_hu,
+              MIN (f_begin) AS event_begin,
+              MIN (f_begin) AS event_end
+       FROM   t_case a, t_irat_tevlog b
+      WHERE       a.proposal_id = basic.ivk_elso_azon (b.f_ivk, 'a')
+              AND a.autouw = 'I'
+              AND b.f_begin >= DATE '2018-01-01'
+              AND b.f_alirattipusid = 2207
+   GROUP BY   proposal_id, 'enyil_pkr_arrival', 'enyil_pkr_erkezes';
+COMMIT;
+
 
 DROP TABLE t_events_autouw;
 COMMIT;
 
 CREATE TABLE t_events_autouw
 AS
-select * from t_events_autouw_base
-UNION
-SELECT   distinct a.case_id,
-            'premium_payment' AS event_name,
-            'dijbefizetes' AS event_name_hu,
-            b.dijbefizdat AS event_begin,
-            b.dijbefizdat AS event_end
-     FROM   t_events_autouw_base a, T_DIJ_HELPER b 
+   SELECT   * FROM t_events_autouw_base
+   UNION
+   SELECT   * FROM t_events_autouw_enyil
+   UNION
+   SELECT   DISTINCT a.case_id,
+                     'premium_payment' AS event_name,
+                     'dijbefizetes' AS event_name_hu,
+                     b.dijbefizdat AS event_begin,
+                     b.dijbefizdat AS event_end
+     FROM   t_events_autouw_base a, T_DIJ_HELPER b
     WHERE   a.case_id = b.proposal_id
-    UNION
-SELECT   distinct a.case_id,
-            'premium_arrival' AS event_name,
-            'dijberkezes' AS event_name_hu,
-            b.dijerkdat AS event_begin,
-            b.dijerkdat AS event_end
-     FROM   t_events_autouw_base a, T_DIJ_HELPER b 
+   UNION
+   SELECT   DISTINCT a.case_id,
+                     'premium_arrival' AS event_name,
+                     'dijberkezes' AS event_name_hu,
+                     b.dijerkdat AS event_begin,
+                     b.dijerkdat AS event_end
+     FROM   t_events_autouw_base a, T_DIJ_HELPER b
     WHERE   a.case_id = b.proposal_id
-     UNION
-SELECT   distinct a.case_id,
-            'premium_booking' AS event_name,
-            'dijkonyveles' AS event_name_hu,
-            b.dijkonyvdat AS event_begin,
-            b.dijkonyvdat AS event_end
-     FROM   t_events_autouw_base a, T_DIJ_HELPER b 
+   UNION
+   SELECT   DISTINCT a.case_id,
+                     'premium_booking' AS event_name,
+                     'dijkonyveles' AS event_name_hu,
+                     b.dijkonyvdat AS event_begin,
+                     b.dijkonyvdat AS event_end
+     FROM   t_events_autouw_base a, T_DIJ_HELPER b
+    WHERE   a.case_id = b.proposal_id
+   UNION
+   SELECT   DISTINCT proposal_id,
+                     'jesz_load' AS event_name,
+                     'jesz betoltes' AS event_name_hu,
+                     b.accounting_date AS event_begin,
+                     b.accounting_date AS event_end
+     FROM   t_events_autouw_base a, t_jesz b
+    WHERE   a.case_id = b.proposal_id
+   UNION
+   SELECT   DISTINCT proposal_id,
+                     'commisssion_payment' AS event_name,
+                     'jutalek_kifizetes' AS event_name_hu,
+                     b.cleared_date AS event_begin,
+                     b.cleared_date AS event_end
+     FROM   t_events_autouw_base a, t_jesz b
     WHERE   a.case_id = b.proposal_id;
+
 COMMIT;
 
 
@@ -673,12 +755,46 @@ AS
 
 COMMIT;
 
+
+DROP TABLE t_events_manual_enyil;
+COMMIT;
+
+CREATE TABLE t_events_manual_enyil
+AS
+     SELECT   proposal_id AS case_id,
+              'enyil_paper_arrival' AS event_name,
+              'enyil_papir_erkezes' AS event_name_hu,
+              MIN (f_idopont) AS event_begin,
+              MIN (f_idopont) AS event_end
+       FROM   t_case a, t_portf_esemeny_ajanlat b
+      WHERE       a.proposal_id = b.f_aivk
+              AND autouw = 'N'
+              AND b.f_esemenykod IN ('E1', '60', 'E2')
+   GROUP BY   proposal_id, 'enyil_paper_arrival', 'enyil_papir_erkezes'
+   UNION
+     SELECT   proposal_id AS case_id,
+              'enyil_pkr_arrival' AS event_name,
+              'enyil_pkr_erkezes' AS event_name_hu,
+              MIN (f_begin) AS event_begin,
+              MIN (f_begin) AS event_end
+       FROM   t_case a, t_irat_tevlog b
+      WHERE       a.proposal_id = basic.ivk_elso_azon (b.f_ivk, 'a')
+              AND a.autouw = 'N'
+              AND b.f_begin >= DATE '2018-01-01'
+              AND b.f_alirattipusid = 2207
+   GROUP BY   proposal_id, 'enyil_pkr_arrival', 'enyil_pkr_erkezes';
+COMMIT;
+
+
 DROP TABLE t_events_prem;
 COMMIT;
+
 
 CREATE TABLE t_events_prem
 AS
    SELECT   * FROM t_events_manual_base
+   UNION
+   SELECT   * FROM t_events_manual_enyil
    UNION
    SELECT   DISTINCT a.case_id,
                      'premium_payment' AS event_name,
@@ -702,7 +818,23 @@ AS
                      b.dijkonyvdat AS event_begin,
                      b.dijkonyvdat AS event_end
      FROM   t_events_manual_base a, T_DIJ_HELPER b
-    WHERE   a.case_id = b.proposal_id;
+    WHERE   a.case_id = b.proposal_id
+       UNION
+   SELECT   DISTINCT proposal_id,
+                     'jesz_load' AS event_name,
+                     'jesz betoltes' AS event_name_hu,
+                     b.accounting_date AS event_begin,
+                     b.accounting_date AS event_end
+     FROM   t_events_manual_base a, t_jesz b
+    WHERE   a.case_id = b.proposal_id
+   UNION
+   SELECT   DISTINCT proposal_id,
+                     'commisssion_payment' AS event_name,
+                     'jutalek_kifizetes' AS event_name_hu,
+                     b.cleared_date AS event_begin,
+                     b.cleared_date AS event_end
+     FROM   t_events_manual_base a, t_jesz b
+    WHERE   a.case_id = b.proposal_id;;
     
     
     
