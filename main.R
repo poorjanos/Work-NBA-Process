@@ -85,7 +85,9 @@ t_event_log <- t_newbusiness_event_log %>%
   ))
 
 # Gen app input
-write.csv(t_event_log %>% filter(CONTRACT_PERIOD == '2018/01'), here::here("Data", "t_event_log_201801.csv"))
+write.csv(t_event_log %>% filter(CONTRACT_PERIOD == '2018/01'),
+          here::here("Data", "t_event_log_201801.csv"),
+          row.names = FALSE)
 
 
 
@@ -108,8 +110,8 @@ event_log_filt <- t_log_bupar %>%
 
 # Filter for frequent traces
 event_log_filt <- t_log_bupar %>%
-  filter_endpoints(start_activities = "alairas", end_activities = "jutalek_kifizetes") %>% 
-  filter_trace_frequency(percentage = 0.25, reverse = F) 
+  #filter_endpoints(start_activities = "alairas", end_activities = "jutalek_kifizetes") %>% 
+  filter_trace_frequency(percentage = 0.6, reverse = F) 
 
 # Plot frequency map
 event_log_filt %>% 
@@ -134,4 +136,7 @@ event_log_filt %>%
 # Medium type
 # Trace frequency
 
-activity_dashboard(t_log_bupar)
+activity_dashboard(t_event_log_app)
+
+
+t_test <- t_event_log_app %>% filter(AUTOUW == 'N')

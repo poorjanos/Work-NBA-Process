@@ -25,8 +25,7 @@ server <- function(input, output) {
   filtered <- reactive({
     t_event_log_app %>%
       filter(
-        PRODUCT_LINE == input$prodLineInput,
-        AUTOUW <= input$autoUwInput
+        PRODUCT_LINE == input$prodLineInput & AUTOUW == input$autoUwInput
       ) %>%
       eventlog(
         case_id = "CASE_ID",
