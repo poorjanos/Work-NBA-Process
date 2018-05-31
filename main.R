@@ -94,7 +94,7 @@ write.csv(t_event_log %>% filter(CONTRACT_PERIOD == '2018/01'),
 
 # Transform df into bupaR eventlog
 t_log_bupar <- t_event_log %>%
-  filter(PRODUCT_LINE == "Home") %>% 
+  filter(PRODUCT_LINE == "Life") %>% 
   eventlog(
     case_id = "CASE_ID",
     activity_id = "EVENT_NAME_HU",
@@ -110,7 +110,7 @@ event_log_filt <- t_log_bupar %>%
 
 # Filter for frequent traces
 event_log_filt <- t_log_bupar %>%
-  #filter_endpoints(start_activities = "alairas", end_activities = "jutalek_kifizetes") %>% 
+  filter_endpoints(start_activities = "alairas", end_activities = "jutalek_kifizetes") %>% 
   filter_trace_frequency(percentage = 0.6, reverse = F) 
 
 # Plot frequency map
@@ -136,7 +136,7 @@ event_log_filt %>%
 # Medium type
 # Trace frequency
 
-activity_dashboard(t_event_log_app)
+activity_dashboard(event_log_filt)
 
 
 t_test <- t_event_log_app %>% filter(AUTOUW == 'N')

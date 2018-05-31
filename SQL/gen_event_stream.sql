@@ -158,14 +158,13 @@ AS
               kontakt.t_lean_alirattipus x,
               kontakt.t_ajanlat_attrib b
       WHERE       a.f_int_begin >= DATE '2018-01-01'
-              AND (a.f_int_end - a.f_int_begin) * 1440 < 45
+              AND (a.f_int_end - a.f_int_begin) * 1440 < 90
               AND (a.f_int_end - a.f_int_begin) * 86400 > 5
               AND afc.afc_wflog_intezkedes (a.f_ivkwfid, a.f_logid) IS NOT NULL
               AND a.f_ivk = b.f_ivk(+)
               AND a.f_alirattipusid = x.f_alirattipusid
               AND UPPER (kontakt.basic.get_userid_login (a.f_userid)) NOT IN
                        ('MARKIB', 'SZERENCSEK')
-              AND kontakt.basic.get_userid_kiscsoport (a.f_userid) IS NOT NULL
               AND x.f_lean_tip = 'AL'
               AND b.f_termcsop IS NOT NULL
               AND b.f_erkezes >= DATE '2017-01-01'
@@ -184,7 +183,6 @@ COMMIT;
 
 
 --Delete proposals with incomplete taskresults
-
 DELETE FROM   t_event_stream
       WHERE   case_id IN (SELECT   case_id
                                FROM   t_event_stream
@@ -194,7 +192,6 @@ COMMIT;
 
 
 --Delete proposals with outlier tasks
-
 DELETE FROM   t_event_stream
       WHERE   case_id IN
                     (SELECT   case_id
@@ -213,7 +210,6 @@ COMMIT;
 
 
 --delete unfinished proposals
-
 DELETE FROM   t_event_stream a
       WHERE   case_id NOT IN
                     (SELECT   case_id
@@ -264,6 +260,12 @@ UPDATE   t_event_stream a
                FROM   tasknames b
               WHERE   lower(a.event_name_hu) = lower(b.taskname));
 
+COMMIT;
+
+
+--delete events with no name
+DELETE FROM   t_event_stream a
+      WHERE   event_name is null;
 COMMIT;
 
 
@@ -388,7 +390,6 @@ COMMIT;
 
 
 --update reason
-
 UPDATE   t_event_stream a
    SET   put_on_hold_reason =
             (SELECT   put_on_hold_reason
@@ -515,6 +516,31 @@ AS
 
 COMMIT;
 
+-- Add happy flow flag
+ALTER TABLE t_case
+ADD
+(HAPPYFLOW char(2));
+COMMIT;
+
+UPDATE   t_case a
+   SET   happyflow = 'N'
+ WHERE   EXISTS
+            (SELECT   1
+               FROM   t_event_stream b
+              WHERE   a.proposal_id = b.case_id
+                      AND event_result = 'put_on_hold');
+
+COMMIT;
+
+UPDATE   t_case a
+   SET   happyflow = 'I'
+ WHERE   happyflow IS NULL;
+
+COMMIT;
+
+
+
+
 --------------------------------------------------------------------------------
 /* 
 Generate premiums to cases
@@ -638,8 +664,8 @@ AS
     WHERE   autouw = 'I'
    UNION
    SELECT   proposal_id as case_id,
-            'autoUW finalized_contract' AS event_name,
-            'menesztes_kpm' AS event_name_hu,
+            'autoUW_finalized_contract' AS event_name,
+            'automatikus_menesztes' AS event_name_hu,
             erkdat AS event_begin,
             erkdat AS event_end
      FROM   t_case
@@ -850,10 +876,11 @@ AS
             event_end,
             event_name,
             case
-            when event_name like '%failed-automat data proofing%' then 'data proofing auw_rework'
-            when event_name not like '%failed-automat%' and event_name like '%data proofing%' then 'data proofing'
-            when event_name like '%recording%' then 'data recording'
-            when event_name like '%medical evaluation%' then 'medical evaluation'
+            when event_name like '%failed-automat data proofing%' then 'data_proofing_auw_rework'
+            when event_name not like '%failed-automat%' and event_name like '%data proofing%' then 'data_proofing'
+            when event_name like '%recording%' then 'data_recording'
+            when event_name like '%medical evaluation%' then 'medical_evaluation'
+            when event_name like '%medical validation%' then 'medical_validation'
             end as event_name_simple,
             event_result,
             event_trigger,
@@ -865,10 +892,11 @@ AS
                AS event_meta,
             event_name_hu,
             case
-            when event_name_hu like '%sikertelen kpm adatellenõrzés%' then 'kpm adatellenõrzés'
-            when event_name_hu not like '%sikertelen kpm%' and  event_name_hu like '%adatellenõrzés%' then 'adatellenõrzés'
-            when event_name_hu like '%rögz%' then 'adatrögzítés'
-            when event_name_hu like '%kockázatelb%' then 'orvosi elbírálás'
+            when event_name_hu like '%sikertelen kpm adatellenõrzés%' then 'adat_ellenorzes_kpm_hiba'
+            when event_name_hu not like '%sikertelen kpm%' and  event_name_hu like '%adatellenõrzés%' then 'adat_ellenorzes'
+            when event_name_hu like '%rögz%' then 'adat_rogzites'
+            when event_name_hu like '%kockázatelb%' then 'orvosi_elbiralas'
+            when event_name_hu like '%validálás%' then 'orvosi_validalas'
             end as event_name_simple_hu,
             event_result_hu,
             event_trigger_hu,
@@ -980,7 +1008,7 @@ AS
     WHERE       case_id IN (SELECT   case_id FROM t_events_manual_base)
             AND event_id NOT IN (SELECT   event_id FROM t_closing_events)
             AND event_id NOT IN (SELECT   event_id FROM t_first_events)
-            AND (event_name_simple = 'medical evaluation'
+            AND (event_name_simple = 'medical_evaluation'
                  OR (put_on_hold_outcome IS NOT NULL
                      AND put_on_hold_outcome <> 'no_contact'));
 COMMIT;
@@ -1074,5 +1102,6 @@ AS
             b.autouw,
             TRUNC (szerzdat, 'mm') AS contract_period
      FROM   t_events a, t_case b
-    WHERE   a.case_id = b.proposal_id;
+    WHERE   a.case_id = b.proposal_id
+    ORDER BY b.proposal_id, a.event_begin;
 COMMIT;

@@ -36,7 +36,7 @@ server <- function(input, output) {
         resource_id = "PARTNER_NAME"
       ) %>%
       filter_endpoints(start_activities = "alairas", end_activities = "jutalek_kifizetes") %>%
-      filter_trace_frequency(percentage = input$traceFreqInput, reverse = F)
+      filter_trace_frequency(percentage = input$tracefreqinput, reverse = F)
   })
 
 
