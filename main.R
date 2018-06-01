@@ -93,7 +93,7 @@ write.csv(t_event_log %>% filter(CONTRACT_PERIOD == '2018/01'),
 
 
 # Transform df into bupaR eventlog
-t_log_bupar <- t_event_log %>%
+t_log_bupar <- t_event_log_app %>%
   filter(PRODUCT_LINE == "Life") %>% 
   eventlog(
     case_id = "CASE_ID",
@@ -103,6 +103,23 @@ t_log_bupar <- t_event_log %>%
     timestamp = "TIMESTAMP",
     resource_id = "PARTNER_NAME"
   )
+
+# EDA
+t_log_bupar %>% filter_activity('enyil_papir_erkezes') 
+
+t_log_bupar %>% 
+  filter_activity('enyil_papir_erkezes', reverse = TRUE) %>% 
+  activity_presence() %>%
+  plot
+
+t_log_bupar %>%
+  activity_frequency("activity") %>% 
+  plot
+
+t_log_bupar %>%
+  end_activities("activity") %>% 
+  plot
+
 
 # Filter for frequent events
 event_log_filt <- t_log_bupar %>%

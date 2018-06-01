@@ -447,8 +447,8 @@ AS
                AS medium_type,
             'I' AS autouw,
             alirdat,
-            erkdat,
-            szerzdat
+            erkdat + (1/1440) as  erkdat,
+            szerzdat + (1/1440*2) as szerzdat
      FROM   (SELECT   * FROM pss_201801_kieg@dl_peep
              UNION
              SELECT   * FROM pss_201802_kieg@dl_peep
@@ -495,8 +495,8 @@ AS
                AS medium_type,
             'N' AS autouw,
             alirdat,
-            erkdat,
-            szerzdat
+            erkdat + (1/1440) as  erkdat,
+            szerzdat + (1/1440*2) as szerzdat
      FROM   (SELECT   * FROM pss_201801_kieg@dl_peep
              UNION
              SELECT   * FROM pss_201802_kieg@dl_peep
@@ -596,14 +596,26 @@ COMMIT;
 DROP TABLE T_DIJ_HELPER;
 COMMIT;
 
+/* Formatted on 2018. 06. 01. 10:25:06 (QP5 v5.115.810.9015) */
 --Merge helpers
+
 CREATE TABLE T_DIJ_HELPER
 AS
-SELECT * from T_DIJ_HELPER_ABLAK
-UNION 
-SELECT * from T_DIJ_HELPER_FUFI;
-COMMIT;
+   SELECT   proposal_id,
+            contract_id,
+            dijbefizdat + (1 / 1440 * 3) AS dijbefizdat,
+            dijerkdat + (1 / 1440 * 4) AS dijerkdat,
+            dijkonyvdat
+     FROM   T_DIJ_HELPER_ABLAK
+   UNION
+   SELECT   proposal_id,
+            contract_id,
+            dijbefizdat + (1 / 1440 * 3) AS dijbefizdat,
+            dijerkdat + (1 / 1440 * 4) AS dijerkdat,
+            TRUNC (dijkonyvdat, 'ddd') + (1 / 1440 * 1439) AS dijkonyvdat
+     FROM   T_DIJ_HELPER_FUFI;
 
+COMMIT;
 --------------------------------------------------------------------------------
 /* 
 Generate paid commissions to cases
@@ -666,8 +678,8 @@ AS
    SELECT   proposal_id as case_id,
             'autoUW_finalized_contract' AS event_name,
             'automatikus_menesztes' AS event_name_hu,
-            erkdat AS event_begin,
-            erkdat AS event_end
+            szerzdat AS event_begin,
+            szerzdat AS event_end
      FROM   t_case
     WHERE   autouw = 'I';
 COMMIT;
@@ -1049,34 +1061,10 @@ COMMIT;
 DROP TABLE t_events;
 COMMIT;
 
+/* Formatted on 2018. 06. 01. 10:28:53 (QP5 v5.115.810.9015) */
 CREATE TABLE t_events
 AS
-   SELECT   case_id,
-            event_name,
-            event_name_hu,
-            CASE
-               WHEN event_name = 'autoUW finalized_contract'
-               THEN
-                  event_begin + (1 / 1440) --offset autouw with 1 min
-               WHEN event_name = 'premium_payment'
-               THEN
-                  event_begin + (1 / 1440) --offset premium_payment with 1 min
-               ELSE
-                  event_begin
-            END
-               AS event_begin,
-            CASE
-               WHEN event_name = 'autoUW finalized_contract'
-               THEN
-                  event_end + (1 / 1440)
-               WHEN event_name = 'premium_payment'
-               THEN
-                  event_end + (1 / 1440) --offset premium_payment with 1 min
-               ELSE
-                  event_end
-            END
-               AS event_end
-     FROM   t_events_autouw
+   SELECT   * FROM t_events_autouw
    UNION
    SELECT   * FROM t_events_manual;
 

@@ -35,14 +35,16 @@ server <- function(input, output) {
         timestamp = "TIMESTAMP",
         resource_id = "PARTNER_NAME"
       ) %>%
-      filter_endpoints(start_activities = "alairas", end_activities = "jutalek_kifizetes") %>%
-      filter_trace_frequency(percentage = input$tracefreqinput, reverse = F)
+      #filter_endpoints(start_activities = "alairas", end_activities = "jutalek_kifizetes") %>%
+      filter_trace_frequency(percentage = input$traceFreqInput, reverse = F) %>% 
+      filter_activity('enyil_papir_erkezes', reverse = TRUE)
   })
 
 
   output$processMap <- renderGrViz({
     filtered() %>%
-      process_map(type_nodes = frequency("absolute"), type_edges = performance(median, "days"), rankdir = "TB")
+#      process_map(type_nodes = frequency("absolute"), type_edges = performance(median, "days"), rankdir = "TB")
+    process_map(type_nodes = frequency("relative"), type_edges = frequency("relative"), rankdir = "TB")
   })
 }
 
