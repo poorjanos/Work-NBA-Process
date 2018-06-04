@@ -1,9 +1,9 @@
 # Output files
-.Rmd
-.csv
-.html
-.pptx
-.pdf
+*.Rmd
+*.csv
+*.html
+*.pptx
+*.pdf
 scriptLog
 
 # History files
