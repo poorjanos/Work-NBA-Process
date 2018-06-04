@@ -14,34 +14,34 @@ t_event_log_app <- read.csv(here::here("Data", "t_event_log_201801.csv"), string
     MEDIUM_TYPE = as.factor(MEDIUM_TYPE),
     AUTOUW = as.factor(case_when(
       .$AUTOUW == "I" ~ "Automatikus",
-      TRUE ~ "Manuális"
+      TRUE ~ "Manualis"
     ))
   )
 
 ui <- fluidPage(
-  titlePanel("Kötvényesítés: aláírástól jutlékfizetésig"),
+  titlePanel("Kotvenyesites: alairastol jutlekfizetesig"),
   sidebarLayout(
     sidebarPanel(
       sliderInput("traceFreqInput", "Szálgyakoriság (trace frequency)", min = 0, max = 1, value = 0.25),
-      checkboxGroupInput("prodLineInput", "Termékkategóriák:",
+      checkboxGroupInput("prodLineInput", "Termekkategoriak:",
         choices = levels(t_event_log_app$PRODUCT_LINE),
         selected = "Home"
       ),
-      checkboxGroupInput("autoUwInput", "Automatikus/manuális folyamatág:",
+      checkboxGroupInput("autoUwInput", "Automatikus/manualis folyamatag:",
         choices = levels(t_event_log_app$AUTOUW),
         selected = levels(t_event_log_app$AUTOUW)
       ),
-      checkboxGroupInput("SalesChannelInput", "Értékesítési csatorna:",
+      checkboxGroupInput("SalesChannelInput", "Ertékesitesi csatorna:",
         choices = levels(t_event_log_app$SALES_CHANNEL_CODE),
         selected = levels(t_event_log_app$SALES_CHANNEL_CODE),
         inline = TRUE
       ),
-      checkboxGroupInput("mediumInput", "Kötési mód:",
+      checkboxGroupInput("mediumInput", "Kotesi mod:",
         choices = levels(t_event_log_app$MEDIUM_TYPE),
         selected = levels(t_event_log_app$MEDIUM_TYPE),
         inline = TRUE
       ),
-      actionButton("runFilter", "Kérem a folyamarajzot!")
+      actionButton("runFilter", "Kerem a folyamarajzot!")
     ),
     mainPanel(grVizOutput("processMap", width = "100%", height = "800px"))
   )
