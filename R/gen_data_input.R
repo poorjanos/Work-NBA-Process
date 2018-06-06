@@ -86,5 +86,10 @@ t_event_log <- t_newbusiness_event_log %>%
 
 # Save to local storage
 write.csv(t_event_log %>% filter(CONTRACT_PERIOD == '2018/01'),
-          here::here("Data", "t_event_log_201801.csv"),
+          here::here("Data", "t_event_log.csv"),
+          row.names = FALSE)
+
+# Save to local storage
+write.csv(t_event_log %>% filter(CONTRACT_PERIOD %in% c('2018/01', '2018/02', '2018/03')),
+          here::here("Data", "t_event_log.csv"),
           row.names = FALSE)

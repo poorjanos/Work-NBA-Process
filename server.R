@@ -5,7 +5,7 @@ library(bupaR)
 library(processmapR)
 library(DiagrammeR)
 
-t_event_log_app <- read.csv(here::here("Data", "t_event_log_201801.csv"), stringsAsFactors = FALSE) %>%
+t_event_log_app <- read.csv(here::here("Data", "t_event_log.csv"), stringsAsFactors = FALSE) %>%
   mutate(
     TIMESTAMP = ymd_hms(TIMESTAMP),
     PRODUCT_LINE = as.factor(PRODUCT_LINE),

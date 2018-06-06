@@ -1064,9 +1064,19 @@ COMMIT;
 /* Formatted on 2018. 06. 01. 10:28:53 (QP5 v5.115.810.9015) */
 CREATE TABLE t_events
 AS
-   SELECT   * FROM t_events_autouw
+   SELECT   case_id,
+            TRIM (event_name) AS event_name,
+            TRIM (event_name_hu) AS event_name_hu,
+            event_begin,
+            event_end
+     FROM   t_events_autouw
    UNION
-   SELECT   * FROM t_events_manual;
+   SELECT   case_id,
+            TRIM (event_name) AS event_name,
+            TRIM (event_name_hu) AS event_name_hu,
+            event_begin,
+            event_end
+     FROM   t_events_manual;
 
 COMMIT;
 
