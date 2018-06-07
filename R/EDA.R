@@ -5,7 +5,7 @@ t_event_log_app <- read.csv(here::here("Data", "t_event_log.csv"), stringsAsFact
   mutate(
     TIMESTAMP = ymd_hms(TIMESTAMP),
     PRODUCT_LINE = as.factor(PRODUCT_LINE),
-    SALES_CHANNEL_CODE = as.factor(SALES_CHANNEL_CODE),
+    SALES_CHANNEL = as.factor(SALES_CHANNEL),
     MEDIUM_TYPE = as.factor(MEDIUM_TYPE),
     AUTOUW = as.factor(case_when(
       .$AUTOUW == "I" ~ "Automatikus",

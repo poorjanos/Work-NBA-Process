@@ -9,38 +9,38 @@ t_event_log_app <- read.csv(here::here("Data", "t_event_log.csv"), stringsAsFact
   mutate(
     TIMESTAMP = ymd_hms(TIMESTAMP),
     PRODUCT_LINE = as.factor(PRODUCT_LINE),
-    SALES_CHANNEL_CODE = as.factor(SALES_CHANNEL_CODE),
+    SALES_CHANNEL = as.factor(SALES_CHANNEL),
     MEDIUM_TYPE = as.factor(MEDIUM_TYPE),
     AUTOUW = as.factor(case_when(
       .$AUTOUW == "I" ~ "Automatikus",
-      TRUE ~ "Manualis"
+      TRUE ~ "Manuális"
     ))
   )
 
 ui <- fluidPage(
-  titlePanel("Kotvenyesites: alairastol jutlekfizetesig"),
+  titlePanel("Kötvényesítés: interaktív folyamattérkép"),
   sidebarLayout(
     sidebarPanel(
       sliderInput("traceFreqInput", "Szálgyakoriság (trace frequency)", min = 0, max = 1, value = 0.25),
-      checkboxGroupInput("prodLineInput", "Termekkategoriak:",
+      checkboxGroupInput("prodLineInput", "Termékkategóriák:",
         choices = levels(t_event_log_app$PRODUCT_LINE),
         selected = "Home"
       ),
-      checkboxGroupInput("autoUwInput", "Automatikus/manualis folyamatag:",
+      checkboxGroupInput("autoUwInput", "Automatikus/manualis folyamatág:",
         choices = levels(t_event_log_app$AUTOUW),
         selected = levels(t_event_log_app$AUTOUW)
       ),
-      checkboxGroupInput("SalesChannelInput", "Ertékesitesi csatorna:",
-        choices = levels(t_event_log_app$SALES_CHANNEL_CODE),
-        selected = levels(t_event_log_app$SALES_CHANNEL_CODE),
+      checkboxGroupInput("SalesChannelInput", "Értékesitesi csatorna:",
+        choices = levels(t_event_log_app$SALES_CHANNEL),
+        selected = levels(t_event_log_app$SALES_CHANNEL),
         inline = TRUE
       ),
-      checkboxGroupInput("mediumInput", "Kotesi mod:",
+      checkboxGroupInput("mediumInput", "Kötesi mód:",
         choices = levels(t_event_log_app$MEDIUM_TYPE),
         selected = levels(t_event_log_app$MEDIUM_TYPE),
         inline = TRUE
       ),
-      actionButton("runFilter", "Kerem a folyamarajzot!")
+      actionButton("runFilter", "Kérem a folyamarajzot!")
     ),
     mainPanel(grVizOutput("processMap", width = "100%", height = "800px"))
   )
