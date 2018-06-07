@@ -36,12 +36,19 @@ filtered <- eventReactive(input$runFilter, {
                       resource_id = "PARTNER_NAME"
                     ) %>%
                     filter_trace_frequency(percentage = input$traceFreqInput, reverse = F) %>%
-                    filter_endpoints(start_activities = "alairas", end_activities = "jutalek_kifizetes") %>% 
+                    filter_endpoints(start_activities = "alairas",
+                                     end_activities = "jutalek_kifizetes") %>% 
                     filter_activity("enyil_papir_erkezes", reverse = TRUE)
                 })  
                
-  output$processMap <- renderGrViz({
+  output$freqMap <- renderGrViz({
     filtered() %>%
-      process_map(type_nodes = frequency("absolute"), type_edges = frequency("absolute"), rankdir = "TB")
-  })
+      process_map(type_nodes = frequency("absolute"),
+                  type_edges = frequency("absolute"), rankdir = "TB")
+    })
+  
+  output$perfMap <- renderGrViz({
+    filtered() %>%
+      process_map(performance(median, "days"), rankdir = "TB")
+    })
 }

@@ -21,7 +21,8 @@ ui <- fluidPage(
   titlePanel("Kötvényesítés: interaktív folyamattérkép"),
   sidebarLayout(
     sidebarPanel(
-      sliderInput("traceFreqInput", "Szálgyakoriság (trace frequency)", min = 0, max = 1, value = 0.25),
+      sliderInput("traceFreqInput", "Szálgyakoriság (trace frequency)",
+                  min = 0, max = 1, value = 0.25),
       checkboxGroupInput("prodLineInput", "Termékkategóriák:",
         choices = levels(t_event_log_app$PRODUCT_LINE),
         selected = "Home"
@@ -42,6 +43,10 @@ ui <- fluidPage(
       ),
       actionButton("runFilter", "Kérem a folyamarajzot!")
     ),
-    mainPanel(grVizOutput("processMap", width = "100%", height = "800px"))
+    mainPanel(
+      tabsetPanel(type = "tabs",
+                  tabPanel("Gyakoriság", grVizOutput("freqMap", width = "100%", height = "800px")),
+                  tabPanel("Teljesítmény", grVizOutput("perfMap", width = "100%", height = "800px")))
+    )
   )
 )
