@@ -14,42 +14,42 @@ t_event_log_app <- read.csv(here::here("Data", "t_event_log.csv"),
     MEDIUM_TYPE = as.factor(MEDIUM_TYPE),
     AUTOUW = as.factor(case_when(
       .$AUTOUW == "I" ~ "Automatikus",
-      TRUE ~ "Manuális"
+      TRUE ~ "ManuÃ¡lis"
     ))
   )
 
 
 # User interface ------------------------------------------------------------------------
 ui <- fluidPage(
-  titlePanel("Kötvényesítés: interaktív folyamattérkép"),
+  titlePanel("KÃ¶tvÃ©nyesÃ­tÃ©s: interaktÃ­v folyamattÃ©rkÃ©p"),
   sidebarLayout(
     sidebarPanel(
-      sliderInput("traceFreqInput", "Szálgyakoriság (trace frequency)",
+      sliderInput("traceFreqInput", "SzÃ¡lgyakorisÃ¡g (trace frequency)",
                   min = 0, max = 1, value = 0.25),
-      checkboxGroupInput("prodLineInput", "Termékkategóriák:",
+      checkboxGroupInput("prodLineInput", "TermÃ©kkategÃ³riÃ¡k:",
         choices = levels(t_event_log_app$PRODUCT_LINE),
         selected = "Home"
       ),
-      checkboxGroupInput("autoUwInput", "Automatikus/manualis folyamatág:",
+      checkboxGroupInput("autoUwInput", "Automatikus/manualis folyamatÃ¡g:",
         choices = levels(t_event_log_app$AUTOUW),
         selected = levels(t_event_log_app$AUTOUW)
       ),
-      checkboxGroupInput("SalesChannelInput", "Értékesitesi csatorna:",
+      checkboxGroupInput("SalesChannelInput", "Ã‰rtÃ©kesitesi csatorna:",
         choices = levels(t_event_log_app$SALES_CHANNEL),
         selected = levels(t_event_log_app$SALES_CHANNEL),
         inline = TRUE
       ),
-      checkboxGroupInput("mediumInput", "Kötesi mód:",
+      checkboxGroupInput("mediumInput", "KÃ¶tesi mÃ³d:",
         choices = levels(t_event_log_app$MEDIUM_TYPE),
         selected = levels(t_event_log_app$MEDIUM_TYPE),
         inline = TRUE
       ),
-      actionButton("runFilter", "Kérem a folyamarajzot!")
+      actionButton("runFilter", "KÃ©rem a folyamarajzot!")
     ),
     mainPanel(
       tabsetPanel(type = "tabs",
-                  tabPanel("Gyakoriság", grVizOutput("freqMap", width = "100%", height = "800px")),
-                  tabPanel("Teljesítmény", grVizOutput("perfMap", width = "100%", height = "800px")))
+                  tabPanel("GyakorisÃ¡g", grVizOutput("freqMap", width = "100%", height = "800px")),
+                  tabPanel("TeljesÃ­tmÃ©ny", grVizOutput("perfMap", width = "100%", height = "800px")))
     )
   )
 )
@@ -91,3 +91,5 @@ filtered <- eventReactive(input$runFilter, {
       process_map(performance(median, "days"), rankdir = "TB")
     })
 }
+
+shinyApp(ui, server)
