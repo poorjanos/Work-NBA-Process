@@ -4,6 +4,7 @@
 *.html
 *.pptx
 *.pdf
+*.png
 scriptLog
 
 # History files

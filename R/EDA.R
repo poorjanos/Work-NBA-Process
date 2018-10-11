@@ -16,7 +16,7 @@ t_event_log_app <- read.csv(here::here("Data", "t_event_log.csv"), stringsAsFact
 # Filter event log
 t_event_log_app_filtered <-  t_event_log_app %>%
   filter(
-    PRODUCT_LINE == "Life"
+    PRODUCT_LINE == "Home"
   ) %>%
   eventlog(
     case_id = "CASE_ID",
@@ -42,6 +42,19 @@ t_event_log_app_filtered %>%
 t_event_log_app_filtered %>%
   end_activities("activity") %>% 
   plot
+
+
+t_event_log_app_filtered %>% activity_presence() %>% # as of cases
+  plot()
+
+t_event_log_app_filtered %>%
+  trace_coverage("trace") %>%
+  plot()
+
+t_throughput_case <- t_event_log_app_filtered %>% throughput_time(level = "case", units = "day")
+ggplot(t_throughput_case, aes(x = throughput_time)) +
+  geom_histogram(bins = 20) +
+  theme_minimal()
 
 # Gen process maps
  t_event_log_app_filtered %>%
