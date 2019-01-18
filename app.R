@@ -21,35 +21,35 @@ t_event_log_app <- read.csv(here::here("Data", "t_event_log.csv"),
 
 # User interface ------------------------------------------------------------------------
 ui <- fluidPage(
-  titlePanel("Kötvényesítés: interaktív folyamattérkép"),
+  titlePanel("Process Explorer: New Business Acquisition"),
   sidebarLayout(
     sidebarPanel(
-      sliderInput("traceFreqInput", "Szálgyakoriság (trace frequency)",
+      sliderInput("traceFreqInput", "Trace Frequency)",
                   min = 0, max = 1, value = 0.25),
-      checkboxGroupInput("prodLineInput", "Termékkategóriák:",
+      checkboxGroupInput("prodLineInput", "Product line:",
         choices = levels(t_event_log_app$PRODUCT_LINE),
         selected = "Home"
       ),
-      checkboxGroupInput("autoUwInput", "Automatikus/manualis folyamatág:",
+      checkboxGroupInput("autoUwInput", "Automated/Manual:",
         choices = levels(t_event_log_app$AUTOUW),
         selected = levels(t_event_log_app$AUTOUW)
       ),
-      checkboxGroupInput("SalesChannelInput", "Értékesitesi csatorna:",
+      checkboxGroupInput("SalesChannelInput", "Sales Channel:",
         choices = levels(t_event_log_app$SALES_CHANNEL),
         selected = levels(t_event_log_app$SALES_CHANNEL),
         inline = TRUE
       ),
-      checkboxGroupInput("mediumInput", "Kötesi mód:",
+      checkboxGroupInput("mediumInput", "Media:",
         choices = levels(t_event_log_app$MEDIUM_TYPE),
         selected = levels(t_event_log_app$MEDIUM_TYPE),
         inline = TRUE
       ),
-      actionButton("runFilter", "Kérem a folyamarajzot!")
+      actionButton("runFilter", "Generate process map")
     ),
     mainPanel(
       tabsetPanel(type = "tabs",
-                  tabPanel("Gyakoriság", grVizOutput("freqMap", width = "100%", height = "800px")),
-                  tabPanel("Teljesítmény", grVizOutput("perfMap", width = "100%", height = "800px")))
+                  tabPanel("Frequency", grVizOutput("freqMap", width = "100%", height = "800px")),
+                  tabPanel("Throughput Time", grVizOutput("perfMap", width = "100%", height = "800px")))
     )
   )
 )
