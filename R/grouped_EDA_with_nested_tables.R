@@ -2,6 +2,8 @@ library(bupaR)
 library(processmapR)
 library(DiagrammeR)
 library(tidyverse)
+library(lubridate)
+library(broom)
 
 # Load dataset
 t_event_log_app <- read.csv(here::here("Data", "t_event_log.csv"),
@@ -44,8 +46,8 @@ trace_num <- function(df){
 }
 
 
-through_time <- function(df){
-  throughput_time(
+trace_cov <- function(df){
+  trace_coverage(
     eventlog(
       df,
       case_id = "CASE_ID",
@@ -54,8 +56,69 @@ through_time <- function(df){
       lifecycle_id = "LIFECYCLE_ID",
       timestamp = "TIMESTAMP",
       resource_id = "PARTNER_NAME"
+    ), level = "trace")
+}
+
+
+# Returns df 7x1 -> unnest will fail
+# through_time <- function(df) {
+#   throughput_time(
+#     eventlog(
+#       df,
+#       case_id = "CASE_ID",
+#       activity_id = "EVENT_NAME",
+#       activity_instance_id = "ACTIVITY_INST_ID",
+#       lifecycle_id = "LIFECYCLE_ID",
+#       timestamp = "TIMESTAMP",
+#       resource_id = "PARTNER_NAME"
+#     ),
+#     level = "log", units = "day"
+#   )[c("mean", "median", "min", "max", "st_dev", "q1", "q3")]
+# }
+
+
+# Returns df 1x7 -> unnest will work
+through_time <- function(df) {
+  tidyr::spread(
+    data = data.frame(
+      metric = c("mean", "median", "min", "max", "st_dev", "q1", "q3"),
+      values = throughput_time(
+        eventlog(
+          df,
+          case_id = "CASE_ID",
+          activity_id = "EVENT_NAME",
+          activity_instance_id = "ACTIVITY_INST_ID",
+          lifecycle_id = "LIFECYCLE_ID",
+          timestamp = "TIMESTAMP",
+          resource_id = "PARTNER_NAME"
+        ),
+        level = "log", units = "day"
+      )[c("mean", "median", "min", "max", "st_dev", "q1", "q3")], row.names = NULL
     ),
-    level = "log", units = "day")
+    key = metric, value = values
+  )
+}
+
+
+trace_len <- function(df) {
+  tidyr::spread(
+    data = data.frame(
+      metric = c("mean", "median", "min", "max", "st_dev", "q1", "q3", "iqr"),
+      values = trace_length(
+        eventlog(
+          df,
+          case_id = "CASE_ID",
+          activity_id = "EVENT_NAME",
+          activity_instance_id = "ACTIVITY_INST_ID",
+          lifecycle_id = "LIFECYCLE_ID",
+          timestamp = "TIMESTAMP",
+          resource_id = "PARTNER_NAME"
+        ),
+        level = "log", units = "day"
+      )[c("mean", "median", "min", "max", "st_dev", "q1", "q3", "iqr")], row.names = NULL
+    ),
+    key = metric, value = values
+  )
 }
 
 
@@ -65,9 +128,15 @@ by_product <- t_event_log_clean %>%
   nest() %>%
   mutate(
     trace_number = map(data, trace_num),
-    through_time = map(data, through_time)
+    through_time = map(data, through_time),
+    trace_length = map(data, trace_len)
   )
 
+
+# Retrieve aggregates
+by_product %>% select(PRODUCT_LINE, trace_number) %>% unnest()
+by_product %>% select(PRODUCT_LINE, through_time) %>% unnest()
+by_product %>% select(PRODUCT_LINE, trace_length) %>% unnest()
 
 
 
